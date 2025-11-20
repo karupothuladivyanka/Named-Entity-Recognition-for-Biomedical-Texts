@@ -1,0 +1,1027 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Biomedical Text Analysis Tool</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
+    <style>
+        /* General Styles */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #f5f7fa, #c3cfe2);
+            color: #333;
+            overflow-x: hidden;
+        }
+
+        .container {
+            margin-top: 40px;
+            animation: fadeIn 1.5s ease-in-out;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            color: #2c3e50;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        h1::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 0;
+            height: 3px;
+            background: linear-gradient(135deg, #6a11cb, #2575fc);
+            animation: lineGrow 2s forwards ease-in-out;
+        }
+
+        @keyframes lineGrow {
+            0% { width: 0; }
+            100% { width: 100%; }
+        }
+
+        /* Input Fields and Buttons */
+        .form-control {
+            border-radius: 8px;
+            border: 2px solid transparent;
+            background-color: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(5px);
+            padding: 12px;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .form-control:focus {
+            border-color: #6a11cb;
+            box-shadow: 0 0 12px rgba(106, 17, 203, 0.5);
+            transform: translateY(-3px);
+            background-color: #fff;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #6a11cb, #2575fc);
+            border: none;
+            border-radius: 8px;
+            padding: 10px 20px;
+            position: relative;
+            overflow: hidden;
+            z-index: 1;
+            transition: all 0.5s ease;
+        }
+
+        .btn-primary::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #2575fc, #6a11cb);
+            transition: all 0.5s ease;
+            z-index: -1;
+        }
+
+        .btn-primary:hover::before {
+            left: 0;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(106, 17, 203, 0.3);
+        }
+
+        .btn-primary:active {
+            transform: translateY(0);
+        }
+
+        label {
+            font-weight: 600;
+            color: #4a4e69;
+            transition: all 0.3s ease;
+            display: inline-block;
+            margin-bottom: 10px;
+            background: linear-gradient(90deg, #4a4e69, #6a11cb);
+            background-size: 0 2px;
+            background-repeat: no-repeat;
+            background-position: 0 100%;
+        }
+
+        label:hover {
+            color: #6a11cb;
+            background-size: 100% 2px;
+        }
+
+        /* Custom Tab Styling */
+        .nav-tabs {
+            border-bottom: 2px solid #ddd;
+            margin-bottom: 20px;
+        }
+
+        .nav-tabs .nav-link {
+            border: none;
+            color: #4a4e69;
+            position: relative;
+            transition: all 0.3s ease;
+            margin-right: 5px;
+            font-weight: 600;
+        }
+
+        .nav-tabs .nav-link::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            width: 0;
+            height: 3px;
+            background: linear-gradient(135deg, #6a11cb, #2575fc);
+            transition: all 0.3s ease;
+            transform: translateX(-50%);
+        }
+
+        .nav-tabs .nav-link.active {
+            color: #6a11cb;
+            background: none;
+            border: none;
+        }
+
+        .nav-tabs .nav-link.active::after {
+            width: 100%;
+        }
+
+        .nav-tabs .nav-link:hover {
+            border-color: transparent;
+            color: #6a11cb;
+        }
+
+        .nav-tabs .nav-link:hover::after {
+            width: 70%;
+        }
+
+        /* Tab Content Animation */
+        .tab-pane {
+            animation: fadeSlideIn 0.5s ease-in-out;
+        }
+
+        @keyframes fadeSlideIn {
+            0% { opacity: 0; transform: translateY(20px); }
+            100% { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Loading Spinner */
+        .loading {
+            display: none;
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        .spinner-wrapper {
+            position: relative;
+            width: 100px;
+            height: 100px;
+            margin: 0 auto;
+        }
+
+        .spinner-circle {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            border: 4px solid transparent;
+            border-top-color: #6a11cb;
+            animation: spinnerOne 1.2s linear infinite;
+        }
+
+        .spinner-circle:nth-child(2) {
+            border: 4px solid transparent;
+            border-bottom-color: #2575fc;
+            animation: spinnerTwo 1.2s linear infinite;
+        }
+
+        @keyframes spinnerOne {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @keyframes spinnerTwo {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(-360deg); }
+        }
+
+        .loading p {
+            margin-top: 15px;
+            font-weight: 600;
+            position: relative;
+            display: inline-block;
+        }
+
+        .loading p::after {
+            content: '...';
+            position: absolute;
+            animation: dots 1.5s infinite;
+            width: 30px;
+            text-align: left;
+        }
+
+        @keyframes dots {
+            0%, 20% { content: '.'; }
+            40% { content: '..'; }
+            60%, 100% { content: '...'; }
+        }
+
+        /* Fade-In Animation */
+        @keyframes fadeIn {
+            0% { opacity: 0; transform: translateY(-20px); }
+            100% { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Highlighted Text Area */
+        .highlighted-text {
+            white-space: pre-wrap;
+            font-family: 'Courier New', Courier, monospace;
+            border: 1px solid #ddd;
+            padding: 15px;
+            border-radius: 10px;
+            max-height: 500px;
+            overflow-y: auto;
+            background: #f9f9f9;
+            transition: all 0.4s ease;
+            box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.05);
+        }
+
+        .highlighted-text:hover {
+            box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .highlighted-text::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .highlighted-text::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+
+        .highlighted-text::-webkit-scrollbar-thumb {
+            background: #c3cfe2;
+            border-radius: 10px;
+        }
+
+        .highlighted-text::-webkit-scrollbar-thumb:hover {
+            background: #6a11cb;
+        }
+
+        /* Entity Legend */
+        .entity-legend {
+            display: flex;
+            flex-wrap: wrap;
+            margin-bottom: 15px;
+            justify-content: center;
+        }
+
+        .entity-legend-item {
+            display: flex;
+            align-items: center;
+            margin: 5px 10px;
+            padding: 5px 10px;
+            border-radius: 20px;
+            background: rgba(255, 255, 255, 0.7);
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .entity-legend-item:hover {
+            transform: translateY(-3px) scale(1.05);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .entity-color {
+            width: 20px;
+            height: 20px;
+            margin-right: 8px;
+            border-radius: 50%;
+            transition: transform 0.3s ease;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
+
+        .entity-legend-item:hover .entity-color {
+            transform: scale(1.2);
+        }
+        
+        /* Cards Animation */
+        .card {
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            transform: translateY(50px);
+            opacity: 0;
+        }
+        
+        .card.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        .card:hover {
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.15);
+            transform: translateY(-5px);
+        }
+
+        .card-header {
+            background: linear-gradient(135deg, #6a11cb20, #2575fc20);
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            border-bottom: none;
+            padding: 15px 20px;
+        }
+
+        .card-header h5 {
+            margin: 0;
+            position: relative;
+            display: inline-block;
+        }
+
+        .card-header h5::after {
+            content: '';
+            position: absolute;
+            bottom: -5px;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: linear-gradient(135deg, #6a11cb, #2575fc);
+            transition: width 0.3s ease;
+        }
+
+        .card:hover .card-header h5::after {
+            width: 100%;
+        }
+
+        /* Debug Mode */
+        #debug-info {
+            background: #fff;
+            border: 1px solid #ddd;
+            padding: 15px;
+            border-radius: 12px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            margin-top: 20px;
+            opacity: 0;
+            transform: translateY(30px);
+            transition: all 0.5s ease;
+        }
+        
+        #debug-info.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Modal Animation */
+        @keyframes modalFadeIn {
+            0% { opacity: 0; transform: scale(0.8); }
+            100% { opacity: 1; transform: scale(1); }
+        }
+        
+        /* Upload Input Area Enhancements */
+        .upload-area {
+            border: 2px dashed #c3cfe2;
+            border-radius: 10px;
+            padding: 30px;
+            text-align: center;
+            transition: all 0.3s ease;
+            margin-bottom: 15px;
+            background-color: rgba(255, 255, 255, 0.5);
+        }
+        
+        .upload-area:hover {
+            border-color: #6a11cb;
+            background-color: rgba(255, 255, 255, 0.8);
+        }
+        
+        .upload-icon {
+            font-size: 40px;
+            color: #6a11cb;
+            margin-bottom: 15px;
+            transition: transform 0.3s ease;
+        }
+        
+        .upload-area:hover .upload-icon {
+            transform: translateY(-5px);
+        }
+        
+        .upload-text {
+            font-weight: 600;
+            color: #4a4e69;
+        }
+        
+        .upload-help {
+            font-size: 14px;
+            color: #666;
+            margin-top: 10px;
+        }
+        
+        /* File Input Enhancement */
+        .custom-file-input {
+            position: absolute;
+            height: 0;
+            width: 0;
+            opacity: 0;
+        }
+        
+        /* Input Icons */
+        .input-icon {
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #6a11cb;
+            transition: all 0.3s ease;
+        }
+        
+        .form-control:focus + .input-icon {
+            right: 20px;
+            transform: translateY(-50%) scale(1.2);
+        }
+        
+        /* Text Direction Indicator */
+        .text-direction-arrow {
+            position: absolute;
+            left: -30px;
+            top: 15px;
+            width: 20px;
+            height: 20px;
+            opacity: 0;
+            color: #6a11cb;
+            transition: all 0.3s ease;
+        }
+        
+        .form-control:focus ~ .text-direction-arrow {
+            opacity: 1;
+            left: -20px;
+        }
+        
+        /* Button Animation */
+        .btn .button-text {
+            position: relative;
+            z-index: 1;
+        }
+        
+        .btn .button-icon {
+            position: absolute;
+            right: -20px;
+            opacity: 0;
+            transition: all 0.3s ease;
+        }
+        
+        .btn:hover .button-icon {
+            right: 15px;
+            opacity: 1;
+        }
+        
+        .btn:hover .button-text {
+            transform: translateX(-10px);
+        }
+    </style>
+    </style>
+</head>
+<body>
+    <div class="container my-4 animate__animated animate__fadeIn">
+        <h1 class="text-center mb-4 animate__animated animate__fadeInDown">Biomedical Text Analysis Tool</h1>
+        <div class="row animate__animated animate__fadeInUp">
+            <div class="col-md-12">
+                <ul class="nav nav-tabs" id="inputTabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="pdf-tab" data-bs-toggle="tab" data-bs-target="#pdf-content" type="button" role="tab">
+                            <i class="fas fa-file-pdf me-2"></i>Upload Research PDF
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="text-tab" data-bs-toggle="tab" data-bs-target="#text-content" type="button" role="tab">
+                            <i class="fas fa-keyboard me-2"></i>Extract from Medical Text
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="url-tab" data-bs-toggle="tab" data-bs-target="#url-content" type="button" role="tab">
+                            <i class="fas fa-link me-2"></i>Analyze Medical Website
+                        </button>
+                    </li>
+                </ul>
+                <div class="tab-content" id="inputTabsContent">
+                    <div class="tab-pane fade show active" id="pdf-content" role="tabpanel" aria-labelledby="pdf-tab">
+                        <form id="pdf-form">
+                            <div class="mb-3">
+                                <div class="upload-area" id="pdf-drop-area">
+                                    <div class="upload-icon">
+                                        <i class="fas fa-file-medical"></i>
+                                    </div>
+                                    <div class="upload-text">Drag & Drop Medical PDF or Click to Browse</div>
+                                    <div class="upload-help">Supports medical research papers, clinical notes, and medical reports</div>
+                                    <label for="pdf-file" class="btn btn-outline-primary mt-3">
+                                        <span class="button-text">Select PDF File</span>
+                                        <i class="fas fa-arrow-right button-icon"></i>
+                                    </label>
+                                    <input class="custom-file-input" type="file" id="pdf-file" name="pdf-file" accept=".pdf">
+                                </div>
+                            </div>
+                            <button type="submit" class="btn btn-primary w-100">
+                                <span class="button-text">Analyze Medical PDF</span>
+                                <i class="fas fa-microscope ms-2"></i>
+                            </button>
+                        </form>
+                    </div>
+                    <div class="tab-pane fade" id="text-content" role="tabpanel" aria-labelledby="text-tab">
+                        <form id="text-form">
+                            <div class="mb-3 position-relative">
+                                <label for="input-text" class="form-label">
+                                    <i class="fas fa-notes-medical me-2"></i>Enter Medical or Biomedical Text
+                                </label>
+                                <textarea class="form-control" id="input-text" name="input-text" rows="10" placeholder="Paste clinical notes, research abstracts, or medical descriptions here..."></textarea>
+                                <i class="fas fa-pen input-icon"></i>
+                                <div class="text-direction-arrow">
+                                    <i class="fas fa-arrow-right"></i>
+                                </div>
+                            </div>
+                            <button type="submit" class="btn btn-primary w-100">
+                                <span class="button-text">Extract Biomedical Entities</span>
+                                <i class="fas fa-dna ms-2"></i>
+                            </button>
+                        </form>
+                    </div>
+                    <div class="tab-pane fade" id="url-content" role="tabpanel" aria-labelledby="url-tab">
+                        <form id="url-form">
+                            <div class="mb-3 position-relative">
+                                <label for="url-input" class="form-label">
+                                    <i class="fas fa-globe-americas me-2"></i>Medical Article or Research URL
+                                </label>
+                                <input type="text" class="form-control" id="url-input" name="url-input" placeholder="https://pubmed.ncbi.nlm.nih.gov/..." aria-describedby="urlHelp">
+                                <i class="fas fa-link input-icon"></i>
+                                <small id="urlHelp" class="form-text text-muted">Enter PubMed, medical journal, or health organization URLs</small>
+                            </div>
+                            <button type="submit" class="btn btn-primary w-100">
+                                <span class="button-text">Analyze Web Content</span>
+                                <i class="fas fa-search ms-2"></i>
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="loading" id="loading">
+            <div class="spinner-wrapper">
+                <div class="spinner-circle"></div>
+                <div class="spinner-circle"></div>
+            </div>
+            <p class="mt-3">Processing your biomedical data</p>
+        </div>
+        <div id="results-section" style="display: none;">
+            <div class="row mt-4">
+                <div class="col-md-12">
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h5><i class="fas fa-file-alt me-2"></i>Text Preview</h5>
+                        </div>
+                        <div class="card-body">
+                            <div id="text-preview" class="highlighted-text" style="max-height: 200px;"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h5><i class="fas fa-tag me-2"></i>Named Entity Recognition (NER) Visualization</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="entity-legend" id="entity-legend"></div>
+                            <div id="highlighted-text" class="highlighted-text"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h5><i class="fas fa-lightbulb me-2"></i>General Insights</h5>
+                        </div>
+                        <div class="card-body">
+                            <div id="insights"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h5><i class="fas fa-chart-line me-2"></i>Disease Sentiment and Context Analysis</h5>
+                        </div>
+                        <div class="card-body">
+                            <div id="sentiment-analysis"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-12">
+                <div class="form-check mt-3">
+                    <input class="form-check-input" type="checkbox" id="debug-mode">
+                    <label class="form-check-label" for="debug-mode">
+                        <i class="fas fa-bug me-2"></i>Developer Debug Mode
+                    </label>
+                </div>
+                <div id="debug-info" style="display: none;" class="mt-3">
+                    <div class="card">
+                        <div class="card-header">Debug Information</div>
+                        <div class="card-body">
+                            <pre id="debug-content"></pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/js/all.min.js"></script>
+    <script>
+        // Entity colors for legend
+        const ENTITY_COLORS = {
+            "DISEASE": "#ff9966",
+            "DRUG": "#8aff80",
+            "DRUG_CLASS": "#8aff80",
+            "DOSAGE": "#ff6b6b",
+            "FORM": "#f0e68c",
+            "FREQUENCY": "#ffa500",
+            "DURATION": "#ffff00",
+            "ROUTE": "#add8e6",
+            "REASON": "#98fb98",
+            "SYMPTOM": "#d8bfd8",
+            "ORGAN": "#afeeee",
+            "PROTEIN": "#87cefa",
+            "GENE": "#dda0dd",
+            "CHEMICAL": "#b0c4de",
+            "ORGANIZATION": "#f5deb3",
+            "LOCATION": "#d3d3d3",
+            "VIRUS": "#ffcccb",
+            "HORMONE": "#98fb98"
+        };
+        
+        // Add animation to results cards
+        function animateResultsCards() {
+            const cards = document.querySelectorAll('.card');
+            cards.forEach((card, index) => {
+                setTimeout(() => {
+                    card.classList.add('show');
+                }, 100 * index);
+            });
+        }
+        
+        // Generate entity legend with animation
+        function generateEntityLegend() {
+            const legendDiv = document.getElementById('entity-legend');
+            legendDiv.innerHTML = '';
+            let delay = 0;
+            
+            for (const [label, color] of Object.entries(ENTITY_COLORS)) {
+                const item = document.createElement('div');
+                item.className = 'entity-legend-item animate__animated animate__fadeIn';
+                item.style.animationDelay = `${delay}ms`;
+                
+                const colorBox = document.createElement('div');
+                colorBox.className = 'entity-color';
+                colorBox.style.backgroundColor = color;
+                
+                const labelText = document.createElement('span');
+                labelText.textContent = label;
+                
+                item.appendChild(colorBox);
+                item.appendChild(labelText);
+                legendDiv.appendChild(item);
+                
+                delay += 50;
+            }
+        }
+        
+        // Enhance file drop functionality
+        function setupFileDrop() {
+            const dropArea = document.getElementById('pdf-drop-area');
+            const fileInput = document.getElementById('pdf-file');
+            
+            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                dropArea.addEventListener(eventName, preventDefaults, false);
+            });
+            
+            function preventDefaults(e) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+            
+            ['dragenter', 'dragover'].forEach(eventName => {
+                dropArea.addEventListener(eventName, highlight, false);
+            });
+            
+            ['dragleave', 'drop'].forEach(eventName => {
+                dropArea.addEventListener(eventName, unhighlight, false);
+            });
+            
+            function highlight() {
+                dropArea.classList.add('bg-light');
+            }
+            
+            function unhighlight() {
+                dropArea.classList.remove('bg-light');
+            }
+            
+            dropArea.addEventListener('drop', handleDrop, false);
+            
+            function handleDrop(e) {
+                const dt = e.dataTransfer;
+                const files = dt.files;
+                
+                if (files.length) {
+                    fileInput.files = files;
+                    const fileName = files[0].name;
+                    dropArea.querySelector('.upload-text').textContent = `Selected: ${fileName}`;
+                }
+            }
+            
+            // Also handle click to select
+            fileInput.addEventListener('change', function() {
+                if (this.files.length) {
+                    const fileName = this.files[0].name;
+                    dropArea.querySelector('.upload-text').textContent = `Selected: ${fileName}`;
+                }
+            });
+        }
+        
+        // PDF form submission with animations
+        document.getElementById('pdf-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const formData = new FormData(this);
+            const fileInput = document.getElementById('pdf-file');
+            if (fileInput.files.length === 0) {
+                showAlert('Please select a PDF file', 'warning');
+                return;
+            }
+            showLoading();
+            fetch('/upload-pdf', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => handleAnalysisResult(data))
+            .catch(error => {
+                hideLoading();
+                showAlert('Error: ' + error, 'danger');
+            });
+        });
+        
+        // Text form submission with typing animation
+        document.getElementById('text-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const formData = new FormData(this);
+            const textInput = document.getElementById('input-text');
+            if (!textInput.value.trim()) {
+                showAlert('Please enter some biomedical text', 'warning');
+                return;
+            }
+            
+            // Show a quick typing animation
+            const originalText = textInput.value;
+            textInput.value = '';
+            const speed = 10; // typing speed (lower is faster)
+            let i = 0;
+            
+            function typeWriter() {
+                if (i < originalText.length) {
+                    textInput.value += originalText.charAt(i);
+                    i++;
+                    setTimeout(typeWriter, speed);
+                } else {
+                    // After typing animation completes, submit
+                    setTimeout(() => {
+                        showLoading();
+                        fetch('/analyze-text', {
+                            method: 'POST',
+                            body: formData
+                        })
+                        .then(response => response.json())
+                        .then(data => handleAnalysisResult(data))
+                        .catch(error => {
+                            hideLoading();
+                            showAlert('Error: ' + error, 'danger');
+                        });
+                    }, 200);
+                }
+            }
+            
+            typeWriter();
+        });
+        
+        // URL form submission with animation
+        document.getElementById('url-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const formData = new FormData(this);
+            const urlInput = document.getElementById('url-input');
+            if (!urlInput.value.trim()) {
+                showAlert('Please enter a URL', 'warning');
+                return;
+            }
+            
+            // Animate the URL input with a pulse
+            urlInput.classList.add('animate__animated', 'animate__pulse');
+            setTimeout(() => {
+                urlInput.classList.remove('animate__animated', 'animate__pulse');
+                showLoading();
+                fetch('/analyze-url', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => handleAnalysisResult(data))
+                .catch(error => {
+                    hideLoading();
+                    showAlert('Error: ' + error, 'danger');
+                });
+            }, 300);
+        });
+        
+        // Handle analysis results with animations
+        function handleAnalysisResult(data) {
+            hideLoading();
+            if (data.error) {
+                showAlert('Error: ' + data.error, 'danger');
+                return;
+            }
+            
+            // Display results with typing effect for text preview
+            const textPreview = document.getElementById('text-preview');
+            const previewText = data.text_preview;
+            textPreview.textContent = '';
+            
+            document.getElementById('highlighted-text').innerHTML = data.highlighted_html;
+            document.getElementById('insights').innerHTML = data.insights.replace(/\n/g, '<br>');
+            document.getElementById('sentiment-analysis').innerHTML = data.sentiment_analysis.replace(/\n/g, '<br>');
+            
+            // Show results section with fade in
+            const resultsSection = document.getElementById('results-section');
+            resultsSection.style.display = 'block';
+            resultsSection.classList.add('animate__animated', 'animate__fadeIn');
+            
+            // Animate the typing of text preview
+            let i = 0;
+            const speed = 5; // Speed of typing effect
+            
+            function typeText() {
+                if (i < previewText.length) {
+                    textPreview.textContent += previewText.charAt(i);
+                    textPreview.scrollTop = textPreview.scrollHeight;
+                    i++;
+                    setTimeout(typeText, speed);
+                }
+            }
+            
+            typeText();
+            
+            // Generate entity legend with animation
+            generateEntityLegend();
+            
+            // Animate result cards sequentially
+            animateResultsCards();
+            
+            // If debug mode is on, fetch debug info
+            if (document.getElementById('debug-mode').checked) {
+                fetchDebugInfo();
+            }
+        }
+        
+        // Show loading indicator with animation
+        function showLoading() {
+            const loadingDiv = document.getElementById('loading');
+            loadingDiv.style.display = 'block';
+            loadingDiv.classList.add('animate__animated', 'animate__fadeIn');
+            document.getElementById('results-section').style.display = 'none';
+        }
+        
+        // Hide loading indicator with animation
+        function hideLoading() {
+            const loadingDiv = document.getElementById('loading');
+            loadingDiv.classList.add('animate__animated', 'animate__fadeOut');
+            setTimeout(() => {
+                loadingDiv.style.display = 'none';
+                loadingDiv.classList.remove('animate__animated', 'animate__fadeOut', 'animate__fadeIn');
+            }, 500);
+        }
+        
+        // Alert function with animation
+        function showAlert(message, alertType) {
+            // Create alert div
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `alert alert-${alertType} alert-dismissible fade show animate__animated animate__slideInDown`;
+            alertDiv.setAttribute('role', 'alert');
+            
+            // Add alert content
+            alertDiv.innerHTML = `
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            `;
+            
+            // Add to document
+            document.querySelector('.container').insertBefore(alertDiv, document.querySelector('.container').firstChild);
+            
+            // Auto dismiss after 5 seconds
+            setTimeout(function() {
+                alertDiv.classList.remove('animate__slideInDown');
+                alertDiv.classList.add('animate__slideOutUp');
+                setTimeout(function() {
+                    alertDiv.remove();
+                }, 500);
+            }, 5000);
+        }
+        
+        // Debug mode toggle with animation
+        document.getElementById('debug-mode').addEventListener('change', function() {
+            const debugInfo = document.getElementById('debug-info');
+            if (this.checked) {
+                debugInfo.style.display = 'block';
+                setTimeout(() => {
+                    debugInfo.classList.add('show');
+                }, 50);
+                
+                if (document.getElementById('results-section').style.display !== 'none') {
+                    fetchDebugInfo();
+                }
+            } else {
+                debugInfo.classList.remove('show');
+                setTimeout(() => {
+                    debugInfo.style.display = 'none';
+                }, 500);
+            }
+        });
+        
+        // Fetch debug info with typing animation
+        function fetchDebugInfo() {
+            fetch('/debug?debug_mode=true')
+                .then(response => response.json())
+                .then(data => {
+                    const debugContent = document.getElementById('debug-content');
+                    
+                    // JSON string with formatting
+                    const jsonString = JSON.stringify(data, null, 2);
+                    debugContent.textContent = '';
+                    
+                    // Animation for typing out JSON
+                    let i = 0;
+                    const speed = 1; // Speed of typing effect
+                    
+                    function typeJson() {
+                        if (i < jsonString.length) {
+                            debugContent.textContent += jsonString.charAt(i);
+                            debugContent.scrollTop = debugContent.scrollHeight;
+                            i++;
+                            setTimeout(typeJson, speed);
+                        }
+                    }
+                    
+                    typeJson();
+                })
+                .catch(error => {
+                    console.error('Error fetching debug info:', error);
+                    document.getElementById('debug-content').textContent = 'Error fetching debug information';
+                });
+        }
+        
+        // Tab switching animation
+        document.querySelectorAll('button[data-bs-toggle="tab"]').forEach(tab => {
+            tab.addEventListener('shown.bs.tab', function(e) {
+                // Animate new tab content
+                const targetPane = document.querySelector(e.target.dataset.bsTarget);
+                targetPane.classList.add('animate__animated', 'animate__fadeIn');
+                
+                setTimeout(() => {
+                    targetPane.classList.remove('animate__animated', 'animate__fadeIn');
+                }, 500);
+            });
+        });
+        
+        // Initialize drag and drop for PDF
+        document.addEventListener('DOMContentLoaded', function() {
+            setupFileDrop();
+            
+            // Animate initial elements
+            setTimeout(() => {
+                document.querySelectorAll('.form-label').forEach((label, index) => {
+                    setTimeout(() => {
+                        label.style.backgroundSize = '100% 2px';
+                    }, 100 * index);
+                });
+            }, 500);
+        });
+    </script>
+</body>
+</html>
